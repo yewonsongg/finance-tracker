@@ -1,10 +1,14 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import Link from "next/link";
 
 export default async function Home() {
   let status = "Not connected yet.";
+  let signedInEmail: string | null = null;
 
   try {
     const supabase = await createSupabaseServerClient();
+    const { data: userData } = await supabase.auth.getUser();
+    signedInEmail = userData.user?.email ?? null;
     const { error } = await supabase.from("transactions").select("id").limit(1);
 
     if (!error) {
@@ -38,6 +42,12 @@ export default async function Home() {
             <p className="text-sm text-slate-400">Connection status</p>
             <p className="mt-2 text-lg font-medium text-cyan-200">{status}</p>
           </div>
+          <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-5">
+            <p className="text-sm text-slate-400">Session</p>
+            <p className="mt-2 text-lg font-medium text-cyan-200">
+              {signedInEmail ? `Signed in as ${signedInEmail}` : "Not signed in"}
+            </p>
+          </div>
           <div className="mt-8 grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
             <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
               <p className="font-medium text-white">Env vars</p>
@@ -51,6 +61,20 @@ export default async function Home() {
                 Create a `transactions` table or update the query to match your schema.
               </p>
             </div>
+          </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/auth/sign-in"
+              className="rounded-2xl bg-cyan-300 px-4 py-3 font-medium text-slate-950 transition hover:bg-cyan-200"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/auth/sign-up"
+              className="rounded-2xl border border-white/10 px-4 py-3 font-medium text-white transition hover:bg-white/10"
+            >
+              Create account
+            </Link>
           </div>
         </div>
       </section>
