@@ -1,21 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = requestUrl.searchParams.get("next") ?? "/";
-  let response = NextResponse.redirect(new URL(next, request.url));
+  let response = NextResponse.redirect(new URL("/dashboard", request.url));
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  let supabase;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.redirect(new URL("/auth/sign-in", request.url));
-  }
-
-  if (code) {
-    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+  try {
+    supabase = createServerClient(getSupabaseUrl(), getSupabaseAnonKey(), {
       cookies: {
         get(name) {
           return request.cookies.get(name)?.value;
@@ -28,8 +23,25 @@ export async function GET(request: NextRequest) {
         },
       },
     });
+  } catch {
+    return NextResponse.redirect(new URL("/auth/sign-in", request.url));
+  }
 
-    await supabase.auth.exchangeCodeForSession(code);
+  if (code) {
+    const { data } = await supabase.auth.exchangeCodeForSession(code);
+    const user = data.user;
+
+    if (user) {
+      const { error } = await supabase.from("profiles").upsert({
+        id: user.id,
+        email: user.email,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (error && error.code !== "PGRST205") {
+        throw error;
+      }
+    }
   }
 
   return response;

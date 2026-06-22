@@ -21,11 +21,11 @@ export default function SignUpPage() {
     const password = String(formData.get("password") ?? "");
     const supabase = createSupabaseBrowserClient();
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
@@ -36,8 +36,13 @@ export default function SignUpPage() {
       return;
     }
 
-    setMessage("Check your email to confirm your account.");
-    router.refresh();
+    if (data.session) {
+      router.push("/dashboard");
+      router.refresh();
+      return;
+    }
+
+    setMessage("Check your email to confirm your account, then you will be sent to the dashboard.");
   }
 
   return (
@@ -54,7 +59,7 @@ export default function SignUpPage() {
       <div className="rounded-[2rem] border border-[var(--border)] bg-white/85 p-8 shadow-[0_20px_60px_rgba(190,140,150,0.12)] backdrop-blur-sm">
         <h2 className="text-2xl font-semibold text-[#342c28]">Sign up</h2>
         <p className="mt-2 text-sm text-[#8a7a74]">
-          Create your account and confirm it from email.
+          Create your account. Supabase stores your password securely in Auth, and we save your email in the profile table.
         </p>
 
         <form onSubmit={onSubmit} className="mt-6 grid gap-4">
