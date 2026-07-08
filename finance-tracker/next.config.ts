@@ -5,7 +5,14 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
-  /* config options here */
+  async rewrites() {
+    return [
+      { source: "/transactions", destination: "/dashboard/transactions" },
+      { source: "/analytics", destination: "/dashboard/analytics" },
+      { source: "/goals", destination: "/dashboard/goals" },
+      { source: "/settings", destination: "/dashboard/settings" },
+    ];
+  },
 };
 
 export default nextConfig;

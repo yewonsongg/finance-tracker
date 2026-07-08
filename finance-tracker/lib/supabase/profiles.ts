@@ -4,6 +4,13 @@ export type ProfileRow = {
   id: string;
   email: string | null;
   full_name: string | null;
+  avatar_url: string | null;
+  dashboard_card_visibility: {
+    totalBalance?: boolean;
+    monthlyIncome?: boolean;
+    monthlySpend?: boolean;
+    savingsRate?: boolean;
+  } | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -22,7 +29,7 @@ export async function getOrCreateProfile(
 ) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id,email,full_name,created_at,updated_at")
+    .select("id,email,full_name,avatar_url,dashboard_card_visibility,created_at,updated_at")
     .eq("id", userId)
     .maybeSingle();
 
@@ -39,9 +46,16 @@ export async function getOrCreateProfile(
     .upsert({
       id: userId,
       email,
+      avatar_url: null,
+      dashboard_card_visibility: {
+        totalBalance: true,
+        monthlyIncome: true,
+        monthlySpend: true,
+        savingsRate: true,
+      },
       updated_at: new Date().toISOString(),
     })
-    .select("id,email,full_name,created_at,updated_at")
+    .select("id,email,full_name,avatar_url,dashboard_card_visibility,created_at,updated_at")
     .single();
 
   if (insertError && isMissingTableError(insertError)) {
@@ -49,6 +63,13 @@ export async function getOrCreateProfile(
       id: userId,
       email,
       full_name: null,
+      avatar_url: null,
+      dashboard_card_visibility: {
+        totalBalance: true,
+        monthlyIncome: true,
+        monthlySpend: true,
+        savingsRate: true,
+      },
     } as ProfileRow;
   }
 
