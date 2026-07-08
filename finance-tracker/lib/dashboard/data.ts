@@ -15,49 +15,43 @@ export function buildDashboardData(profile: ProfileRow, email: string | null): D
   const income = 5200 + seed * 45;
   const spend = 2100 + seed * 22;
   const savingsRate = Math.min(82, 45 + (seed % 18));
-  const cardVisibility = {
-    totalBalance: profile.dashboard_card_visibility?.totalBalance ?? true,
-    monthlyIncome: profile.dashboard_card_visibility?.monthlyIncome ?? true,
-    monthlySpend: profile.dashboard_card_visibility?.monthlySpend ?? true,
-    savingsRate: profile.dashboard_card_visibility?.savingsRate ?? true,
-  };
-
-  const metrics = [
-    {
-      key: "totalBalance",
-      label: "Total Balance",
-      value: formatCurrency(baseBalance),
-      note: "Estimated from your current account data",
-      tone: "bg-[#e9d5ff]",
-    },
-    {
-      key: "monthlyIncome",
-      label: "Monthly Income",
-      value: formatCurrency(income),
-      note: "Computed from tracked income sources",
-      tone: "bg-[#c7d2fe]",
-    },
-    {
-      key: "monthlySpend",
-      label: "Monthly Spend",
-      value: formatCurrency(spend),
-      note: "Based on recent transaction activity",
-      tone: "bg-[#bbf7d0]",
-    },
-    {
-      key: "savingsRate",
-      label: "Savings Rate",
-      value: `${savingsRate}%`,
-      note: "Compared with your last snapshot",
-      tone: "bg-[#fbcfe8]",
-    },
-  ].filter((metric) => cardVisibility[metric.key as keyof typeof cardVisibility]);
 
   return {
     displayName: profile.full_name?.trim() || email?.split("@")[0] || "there",
     email,
     avatarUrl: profile.avatar_url,
-    metrics,
+    dashboardCardVisibility: {
+      currentMonthSpend: profile.dashboard_card_visibility?.currentMonthSpend ?? true,
+      latestGoals: profile.dashboard_card_visibility?.latestGoals ?? true,
+      quickReminders: profile.dashboard_card_visibility?.quickReminders ?? true,
+      recentActivity: profile.dashboard_card_visibility?.recentActivity ?? true,
+    },
+    metrics: [
+      {
+        label: "Total Balance",
+        value: formatCurrency(baseBalance),
+        note: "Estimated from your current account data",
+        tone: "bg-[#e9d5ff]",
+      },
+      {
+        label: "Monthly Income",
+        value: formatCurrency(income),
+        note: "Computed from tracked income sources",
+        tone: "bg-[#c7d2fe]",
+      },
+      {
+        label: "Monthly Spend",
+        value: formatCurrency(spend),
+        note: "Based on recent transaction activity",
+        tone: "bg-[#bbf7d0]",
+      },
+      {
+        label: "Savings Rate",
+        value: `${savingsRate}%`,
+        note: "Compared with your last snapshot",
+        tone: "bg-[#fbcfe8]",
+      },
+    ],
     activity: [
       {
         name: "Rent",

@@ -18,6 +18,8 @@ type DashboardShellProps = {
 };
 
 export function DashboardShell({ data, activity, goals = [], children }: DashboardShellProps) {
+  const cardVisibility = data.dashboardCardVisibility;
+
   return (
     <main className="flex min-h-screen items-center justify-center overflow-hidden px-2 py-0">
       <section className="mx-auto my-[20px] grid h-[calc(100vh-40px)] w-full max-w-[1380px] overflow-hidden rounded-[1.5rem] bg-white/80 shadow-[0_20px_80px_rgba(190,140,150,0.12)] backdrop-blur-sm lg:grid-cols-[200px_1fr]">
@@ -31,17 +33,23 @@ export function DashboardShell({ data, activity, goals = [], children }: Dashboa
                 <MetricCards metrics={data.metrics} />
 
                 <div className="grid items-start gap-2 overflow-hidden 2xl:grid-cols-[1.45fr_0.95fr]">
-                  <CurrentMonthSpendCard chartBars={data.chartBars} />
+                  {cardVisibility.currentMonthSpend !== false ? (
+                    <CurrentMonthSpendCard chartBars={data.chartBars} />
+                  ) : null}
 
                   <div className="space-y-2">
-                    <DashboardGoalsPreview goals={goals} />
-                    <DailyNote note="Use this area for reminders, alerts, or a simple summary of today&apos;s finances." />
+                    {cardVisibility.latestGoals !== false ? <DashboardGoalsPreview goals={goals} /> : null}
+                    {cardVisibility.quickReminders !== false ? (
+                      <DailyNote note="Use this area for reminders, alerts, or a simple summary of today&apos;s finances." />
+                    ) : null}
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2 overflow-hidden xl:max-h-full">
-                <ActivityList items={activity ?? data.activity} href="/dashboard/transactions" />
+                {cardVisibility.recentActivity !== false ? (
+                  <ActivityList items={activity ?? data.activity} href="/dashboard/transactions" />
+                ) : null}
               </div>
             </section>
           )}

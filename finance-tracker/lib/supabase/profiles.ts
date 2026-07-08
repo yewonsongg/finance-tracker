@@ -6,10 +6,10 @@ export type ProfileRow = {
   full_name: string | null;
   avatar_url: string | null;
   dashboard_card_visibility: {
-    totalBalance?: boolean;
-    monthlyIncome?: boolean;
-    monthlySpend?: boolean;
-    savingsRate?: boolean;
+    currentMonthSpend?: boolean;
+    latestGoals?: boolean;
+    quickReminders?: boolean;
+    recentActivity?: boolean;
   } | null;
   created_at?: string;
   updated_at?: string;
@@ -48,10 +48,10 @@ export async function getOrCreateProfile(
       email,
       avatar_url: null,
       dashboard_card_visibility: {
-        totalBalance: true,
-        monthlyIncome: true,
-        monthlySpend: true,
-        savingsRate: true,
+        currentMonthSpend: true,
+        latestGoals: true,
+        quickReminders: true,
+        recentActivity: true,
       },
       updated_at: new Date().toISOString(),
     })
@@ -65,10 +65,10 @@ export async function getOrCreateProfile(
       full_name: null,
       avatar_url: null,
       dashboard_card_visibility: {
-        totalBalance: true,
-        monthlyIncome: true,
-        monthlySpend: true,
-        savingsRate: true,
+        currentMonthSpend: true,
+        latestGoals: true,
+        quickReminders: true,
+        recentActivity: true,
       },
     } as ProfileRow;
   }

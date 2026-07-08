@@ -21,6 +21,12 @@ export type DashboardData = {
   displayName: string;
   email: string | null;
   avatarUrl: string | null;
+  dashboardCardVisibility: {
+    currentMonthSpend?: boolean;
+    latestGoals?: boolean;
+    quickReminders?: boolean;
+    recentActivity?: boolean;
+  };
   metrics: DashboardMetric[];
   activity: DashboardActivity[];
   sections: DashboardSection[];

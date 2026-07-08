@@ -5,7 +5,6 @@ import { getOrCreateProfile } from "@/lib/supabase/profiles";
 import type { ProfileRow } from "@/lib/supabase/profiles";
 import { buildDashboardData } from "@/lib/dashboard/data";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { DashboardHeader } from "@/components/dashboard/header";
 
 export default async function SettingsPage() {
   const supabase = await createSupabaseServerClient();
@@ -38,13 +37,13 @@ export default async function SettingsPage() {
 
   const data = buildDashboardData(profile, user.email ?? null);
   const visibility = profile.dashboard_card_visibility ?? {
-    totalBalance: true,
-    monthlyIncome: true,
-    monthlySpend: true,
-    savingsRate: true,
+    currentMonthSpend: true,
+    latestGoals: true,
+    quickReminders: true,
+    recentActivity: true,
   };
 
-  async function saveSettings(formData: FormData) {
+  async function saveProfile(formData: FormData) {
     "use server";
 
     const supabase = await createSupabaseServerClient();
@@ -58,21 +57,63 @@ export default async function SettingsPage() {
     const fullName = String(formData.get("full_name") ?? "").trim() || null;
     const avatarUrl = String(formData.get("avatar_url") ?? "").trim() || null;
 
-    const dashboardCardVisibility = {
-      totalBalance: formData.get("total_balance") === "on",
-      monthlyIncome: formData.get("monthly_income") === "on",
-      monthlySpend: formData.get("monthly_spend") === "on",
-      savingsRate: formData.get("savings_rate") === "on",
-    };
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("dashboard_card_visibility")
+      .eq("id", currentUser.id)
+      .maybeSingle();
 
     await supabase.from("profiles").upsert({
       id: currentUser.id,
       email: currentUser.email ?? null,
       full_name: fullName,
       avatar_url: avatarUrl,
+      dashboard_card_visibility:
+        existingProfile?.dashboard_card_visibility ?? {
+          currentMonthSpend: true,
+          latestGoals: true,
+          quickReminders: true,
+          recentActivity: true,
+      },
+      updated_at: new Date().toISOString(),
+    }).select("id");
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/settings");
+  }
+
+  async function saveDashboardCards(formData: FormData) {
+    "use server";
+
+    const supabase = await createSupabaseServerClient();
+    const { data: userData } = await supabase.auth.getUser();
+    const currentUser = userData.user;
+
+    if (!currentUser) {
+      redirect("/auth/sign-in");
+    }
+
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("full_name,avatar_url")
+      .eq("id", currentUser.id)
+      .maybeSingle();
+
+    const dashboardCardVisibility = {
+      currentMonthSpend: formData.get("current_month_spend") === "on",
+      latestGoals: formData.get("latest_goals") === "on",
+      quickReminders: formData.get("quick_reminders") === "on",
+      recentActivity: formData.get("recent_activity") === "on",
+    };
+
+    await supabase.from("profiles").upsert({
+      id: currentUser.id,
+      email: currentUser.email ?? null,
+      full_name: existingProfile?.full_name ?? null,
+      avatar_url: existingProfile?.avatar_url ?? null,
       dashboard_card_visibility: dashboardCardVisibility,
       updated_at: new Date().toISOString(),
-    });
+    }).select("id");
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/settings");
@@ -87,7 +128,7 @@ export default async function SettingsPage() {
             Update your name and profile picture here.
           </p>
 
-          <form action={saveSettings} className="mt-4 grid gap-3">
+          <form action={saveProfile} className="mt-4 grid gap-3">
             <label className="grid gap-1.5 text-sm text-[#342c28]">
               <span className="text-xs font-medium text-[#6f625d]">Name</span>
               <input
@@ -121,22 +162,26 @@ export default async function SettingsPage() {
             Choose which of the four top cards appear on your dashboard.
           </p>
 
-          <form action={saveSettings} className="mt-4 grid gap-3">
+          <form action={saveDashboardCards} className="mt-4 grid gap-3">
             <label className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-white px-3 py-2.5 text-sm text-[#342c28]">
-              <span>Total Balance</span>
-              <input type="checkbox" name="total_balance" defaultChecked={visibility.totalBalance} />
+              <span>Current Month Spend</span>
+              <input
+                type="checkbox"
+                name="current_month_spend"
+                defaultChecked={visibility.currentMonthSpend}
+              />
             </label>
             <label className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-white px-3 py-2.5 text-sm text-[#342c28]">
-              <span>Monthly Income</span>
-              <input type="checkbox" name="monthly_income" defaultChecked={visibility.monthlyIncome} />
+              <span>Latest Goals</span>
+              <input type="checkbox" name="latest_goals" defaultChecked={visibility.latestGoals} />
             </label>
             <label className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-white px-3 py-2.5 text-sm text-[#342c28]">
-              <span>Monthly Spend</span>
-              <input type="checkbox" name="monthly_spend" defaultChecked={visibility.monthlySpend} />
+              <span>Quick Reminders</span>
+              <input type="checkbox" name="quick_reminders" defaultChecked={visibility.quickReminders} />
             </label>
             <label className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-white px-3 py-2.5 text-sm text-[#342c28]">
-              <span>Savings Rate</span>
-              <input type="checkbox" name="savings_rate" defaultChecked={visibility.savingsRate} />
+              <span>Recent Activity</span>
+              <input type="checkbox" name="recent_activity" defaultChecked={visibility.recentActivity} />
             </label>
             <button
               type="submit"
